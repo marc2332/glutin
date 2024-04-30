@@ -79,7 +79,7 @@ impl Application {
 impl ApplicationHandler<PlatformThreadEvent> for Application {
     fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
         if self.render_thread_senders.is_none() {
-            let (_window, render_context) = create_window_with_render_context(&active_event_loop)
+            let (_window, render_context) = create_window_with_render_context(active_event_loop)
                 .expect("Failed to create window.");
             let render_context = Arc::new(Mutex::new(render_context));
 
