@@ -28,6 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let event_loop_proxy = event_loop.create_proxy();
 
     let mut app = Application {
+        window: None,
         render_thread_senders: None,
         render_thread_index: 0,
         thread_switch_in_progress: false,
@@ -40,6 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 struct Application {
+    window: Option<Window>,
     render_thread_senders: Option<Vec<Sender<RenderThreadEvent>>>,
     render_thread_index: usize,
     thread_switch_in_progress: bool,
@@ -80,13 +82,14 @@ impl Application {
 impl ApplicationHandler<PlatformThreadEvent> for Application {
     fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
         if self.render_thread_senders.is_none() {
-            let (_window, render_context) = create_window_with_render_context(active_event_loop)
+            let (window, render_context) = create_window_with_render_context(active_event_loop)
                 .expect("Failed to create window.");
             let render_context = Arc::new(Mutex::new(render_context));
 
             let (_render_threads, render_thread_senders) =
                 spawn_render_threads(render_context, &self.event_loop_proxy);
 
+            self.window = Some(window);
             self.render_thread_senders = Some(render_thread_senders);
 
             self.send_event_to_current_render_thread(RenderThreadEvent::MakeCurrent);
