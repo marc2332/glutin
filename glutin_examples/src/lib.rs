@@ -50,7 +50,6 @@ impl ApplicationHandler<()> for Application {
         let (gl_config, window) = match self.gl_config.as_ref().zip(self.window.as_ref()) {
             Some((gl_config, window)) => (gl_config, window),
             _ => {
-                println!("created");
                 // Only Windows requires the window to be present before creating the display.
                 // Other platforms don't really need one.
                 //
