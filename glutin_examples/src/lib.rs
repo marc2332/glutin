@@ -50,6 +50,7 @@ impl ApplicationHandler<()> for Application {
         let (gl_config, window) = match self.gl_config.as_ref().zip(self.window.as_ref()) {
             Some((gl_config, window)) => (gl_config, window),
             _ => {
+                println!("created");
                 // Only Windows requires the window to be present before creating the display.
                 // Other platforms don't really need one.
                 //
@@ -145,19 +146,8 @@ impl ApplicationHandler<()> for Application {
             eprintln!("Error setting vsync: {res:?}");
         }
 
+        self.gl_surface = Some(gl_surface);
         self.gl_context = Some(gl_context);
-    }
-
-    fn about_to_wait(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        if let Some(((gl_context, gl_surface), window)) =
-            &self.gl_context.as_ref().zip(self.gl_surface.as_ref()).zip(self.window.as_ref())
-        {
-            let renderer = self.renderer.as_ref().unwrap();
-            renderer.draw();
-            window.request_redraw();
-
-            gl_surface.swap_buffers(gl_context).unwrap();
-        }
     }
 
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
@@ -205,6 +195,20 @@ impl ApplicationHandler<()> for Application {
                 event: KeyEvent { logical_key: Key::Named(NamedKey::Escape), .. },
                 ..
             } => event_loop.exit(),
+            WindowEvent::RedrawRequested => {
+                if let Some(((gl_context, gl_surface), window)) = &self
+                    .gl_context
+                    .as_ref()
+                    .zip(self.gl_surface.as_ref())
+                    .zip(self.window.as_ref())
+                {
+                    let renderer = self.renderer.as_ref().unwrap();
+                    renderer.draw();
+                    window.request_redraw();
+
+                    gl_surface.swap_buffers(gl_context).unwrap();
+                }
+            },
             _ => (),
         }
     }
