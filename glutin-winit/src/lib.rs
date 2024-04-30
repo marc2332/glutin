@@ -31,7 +31,7 @@ use winit::window::{Window, WindowAttributes};
 #[cfg(glx_backend)]
 use winit::platform::x11::register_xlib_error_hook;
 #[cfg(x11_platform)]
-use winit::platform::x11::WindowBuilderExtX11;
+use winit::platform::x11::WindowAttributesExtX11;
 
 #[cfg(all(not(egl_backend), not(glx_backend), not(wgl_backend), not(cgl_backend)))]
 compile_error!("Please select at least one api backend");
@@ -74,16 +74,16 @@ impl DisplayBuilder {
     }
 
     /// Initialize the OpenGL platform and create a compatible window to use
-    /// with it when the [`WindowBuilder`] was passed with
+    /// with it when the [`WindowAttributes`] was passed with
     /// [`Self::with_window_attributes`]. It's optional, since on some
     /// platforms like `Android` it is not available early on, so you want to
     /// find configuration and later use it with the [`finalize_window`].
     /// But if you don't care about such platform you can always pass
-    /// [`WindowBuilder`].
+    /// [`WindowAttributes`].
     ///
     /// # Api-specific
     ///
-    /// **WGL:** - [`WindowBuilder`] **must** be passed in
+    /// **WGL:** - [`WindowAttributes`] **must** be passed in
     /// [`Self::with_window_attributes`] if modern OpenGL(ES) is desired,
     /// otherwise only builtin functions like `glClear` will be available.
     pub fn build<Picker>(

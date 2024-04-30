@@ -78,7 +78,7 @@ impl ApplicationHandler<()> for Application {
             let display_builder = DisplayBuilder::new().with_window_attributes(window_attributes);
 
             let (window, gl_config) = display_builder
-                .build(&active_event_loop, template, gl_config_picker)
+                .build(active_event_loop, template, gl_config_picker)
                 .expect("Failed to create Window.");
 
             println!("Picked a config with {} samples", gl_config.num_samples());
@@ -125,7 +125,7 @@ impl ApplicationHandler<()> for Application {
 
         let attrs = window.build_surface_attributes(Default::default());
         let gl_surface =
-            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+            unsafe { gl_config.display().create_window_surface(gl_config, &attrs).unwrap() };
 
         // Make it current.
         let gl_context =
