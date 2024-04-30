@@ -47,82 +47,80 @@ struct Application {
 
 impl ApplicationHandler<()> for Application {
     fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
-        let (gl_config, window) = match self.gl_config.as_ref().zip(self.window.as_ref()) {
-            Some((gl_config, window)) => (gl_config, window),
-            _ => {
-                // Only Windows requires the window to be present before creating the display.
-                // Other platforms don't really need one.
-                //
-                // XXX if you don't care about running on Android or so you can safely remove
-                // this condition and always pass the window builder.
-                let window_attributes = cfg!(wgl_backend).then(|| {
-                    Window::default_attributes()
-                        .with_transparent(true)
-                        .with_title("Glutin triangle gradient example (press Escape to exit)")
-                });
+        let (gl_config, window) = if let Some(state) =
+            self.gl_config.as_ref().zip(self.window.as_ref())
+        {
+            state
+        } else {
+            // Only Windows requires the window to be present before creating the display.
+            // Other platforms don't really need one.
+            //
+            // XXX if you don't care about running on Android or so you can safely remove
+            // this condition and always pass the window builder.
+            let window_attributes = cfg!(wgl_backend).then(|| {
+                Window::default_attributes()
+                    .with_transparent(true)
+                    .with_title("Glutin triangle gradient example (press Escape to exit)")
+            });
 
-                // The template will match only the configurations supporting rendering
-                // to windows.
-                //
-                // XXX We force transparency only on macOS, given that EGL on X11 doesn't
-                // have it, but we still want to show window. The macOS situation is like
-                // that, because we can query only one config at a time on it, but all
-                // normal platforms will return multiple configs, so we can find the config
-                // with transparency ourselves inside the `reduce`.
-                let template = ConfigTemplateBuilder::new()
-                    .with_alpha_size(8)
-                    .with_transparency(cfg!(cgl_backend));
+            // The template will match only the configurations supporting rendering
+            // to windows.
+            //
+            // XXX We force transparency only on macOS, given that EGL on X11 doesn't
+            // have it, but we still want to show window. The macOS situation is like
+            // that, because we can query only one config at a time on it, but all
+            // normal platforms will return multiple configs, so we can find the config
+            // with transparency ourselves inside the `reduce`.
+            let template = ConfigTemplateBuilder::new()
+                .with_alpha_size(8)
+                .with_transparency(cfg!(cgl_backend));
 
-                let display_builder =
-                    DisplayBuilder::new().with_window_attributes(window_attributes);
+            let display_builder = DisplayBuilder::new().with_window_attributes(window_attributes);
 
-                let (window, gl_config) = display_builder
-                    .build(&active_event_loop, template, gl_config_picker)
-                    .expect("Failed to create Window.");
+            let (window, gl_config) = display_builder
+                .build(&active_event_loop, template, gl_config_picker)
+                .expect("Failed to create Window.");
 
-                println!("Picked a config with {} samples", gl_config.num_samples());
+            println!("Picked a config with {} samples", gl_config.num_samples());
 
-                let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
+            let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
 
-                // XXX The display could be obtained from any object created by it, so we can
-                // query it from the config.
-                let gl_display = gl_config.display();
+            // XXX The display could be obtained from any object created by it, so we can
+            // query it from the config.
+            let gl_display = gl_config.display();
 
-                // The context creation part.
-                let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+            // The context creation part.
+            let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
 
-                // Since glutin by default tries to create OpenGL core context, which may not be
-                // present we should try gles.
-                let fallback_context_attributes = ContextAttributesBuilder::new()
-                    .with_context_api(ContextApi::Gles(None))
-                    .build(raw_window_handle);
+            // Since glutin by default tries to create OpenGL core context, which may not be
+            // present we should try gles.
+            let fallback_context_attributes = ContextAttributesBuilder::new()
+                .with_context_api(ContextApi::Gles(None))
+                .build(raw_window_handle);
 
-                // There are also some old devices that support neither modern OpenGL nor GLES.
-                // To support these we can try and create a 2.1 context.
-                let legacy_context_attributes = ContextAttributesBuilder::new()
-                    .with_context_api(ContextApi::OpenGl(Some(Version::new(2, 1))))
-                    .build(raw_window_handle);
+            // There are also some old devices that support neither modern OpenGL nor GLES.
+            // To support these we can try and create a 2.1 context.
+            let legacy_context_attributes = ContextAttributesBuilder::new()
+                .with_context_api(ContextApi::OpenGl(Some(Version::new(2, 1))))
+                .build(raw_window_handle);
 
-                let not_current_gl_context = Some(unsafe {
-                    gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(
-                        |_| {
+            let not_current_gl_context = Some(unsafe {
+                gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                    gl_display
+                        .create_context(&gl_config, &fallback_context_attributes)
+                        .unwrap_or_else(|_| {
                             gl_display
-                                .create_context(&gl_config, &fallback_context_attributes)
-                                .unwrap_or_else(|_| {
-                                    gl_display
-                                        .create_context(&gl_config, &legacy_context_attributes)
-                                        .expect("failed to create context")
-                                })
-                        },
-                    )
-                });
+                                .create_context(&gl_config, &legacy_context_attributes)
+                                .expect("failed to create context")
+                        })
+                })
+            });
 
-                self.not_current_gl_context = not_current_gl_context;
-                self.window = window;
-                self.gl_config = Some(gl_config);
+            self.not_current_gl_context = not_current_gl_context;
+            self.window = window;
+            self.gl_config = Some(gl_config);
 
-                (self.gl_config.as_ref().unwrap(), self.window.as_ref().unwrap())
-            },
+            (self.gl_config.as_ref().unwrap(), self.window.as_ref().unwrap())
         };
 
         let attrs = window.build_surface_attributes(Default::default());
