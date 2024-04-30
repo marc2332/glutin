@@ -190,7 +190,7 @@ pub fn finalize_window(
     }
 
     #[cfg(x11_platform)]
-    let builder = if let Some(x11_visual) = gl_config.x11_visual() {
+    let attributes = if let Some(x11_visual) = gl_config.x11_visual() {
         attributes.with_x11_visual(x11_visual.visual_id() as _)
     } else {
         attributes
