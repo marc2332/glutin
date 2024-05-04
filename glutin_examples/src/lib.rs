@@ -12,9 +12,7 @@ use winit::keyboard::{Key, NamedKey};
 use winit::window::Window;
 
 use glutin::config::{Config, ConfigTemplateBuilder};
-use glutin::context::{
-    ContextApi, ContextAttributesBuilder, NotCurrentContext, PossiblyCurrentContext, Version,
-};
+use glutin::context::{ContextApi, ContextAttributesBuilder, PossiblyCurrentContext, Version};
 use glutin::display::GetGlDisplay;
 use glutin::prelude::*;
 use glutin::surface::{Surface, SwapInterval, WindowSurface};
@@ -40,7 +38,6 @@ pub fn main(event_loop: winit::event_loop::EventLoop<()>) -> Result<(), Box<dyn 
 struct Application {
     // Renderer must be dropped the first as it uses the GL states from below.
     renderer: Option<Renderer>,
-    not_current_gl_context: Option<NotCurrentContext>,
     gl_context: Option<PossiblyCurrentContext>,
     gl_surface: Option<Surface<WindowSurface>>,
     gl_config: Option<Config>,
@@ -101,7 +98,7 @@ impl Application {
             .with_context_api(ContextApi::OpenGl(Some(Version::new(2, 1))))
             .build(raw_window_handle);
 
-        let not_current_gl_context = Some(unsafe {
+        let not_current_gl_context = unsafe {
             gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
                 gl_display.create_context(&gl_config, &fallback_context_attributes).unwrap_or_else(
                     |_| {
@@ -111,11 +108,11 @@ impl Application {
                     },
                 )
             })
-        });
+        };
 
-        self.not_current_gl_context = not_current_gl_context;
         self.window = window;
         self.gl_config = Some(gl_config);
+        self.gl_context = Some(not_current_gl_context.treat_as_possibly_current());
     }
 }
 
@@ -134,9 +131,10 @@ impl ApplicationHandler<()> for Application {
         let gl_surface =
             unsafe { gl_config.display().create_window_surface(gl_config, &attrs).unwrap() };
 
+        let gl_context = self.gl_context.as_ref().unwrap();
+
         // Make it current.
-        let gl_context =
-            self.not_current_gl_context.take().unwrap().make_current(&gl_surface).unwrap();
+        gl_context.make_current(&gl_surface).unwrap();
 
         // The context needs to be current for the Renderer to set up shaders and
         // buffers. It also performs function loading, which needs a current context on
@@ -145,13 +143,12 @@ impl ApplicationHandler<()> for Application {
 
         // Try setting vsync.
         if let Err(res) = gl_surface
-            .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+            .set_swap_interval(gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
         {
             eprintln!("Error setting vsync: {res:?}");
         }
 
         self.gl_surface = Some(gl_surface);
-        self.gl_context = Some(gl_context);
     }
 
     fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
@@ -162,10 +159,7 @@ impl ApplicationHandler<()> for Application {
         // Destroy the GL Surface and un-current the GL Context before ndk-glue releases
         // the window back to the system.
         let gl_context = self.gl_context.take().unwrap();
-        assert!(self
-            .not_current_gl_context
-            .replace(gl_context.make_not_current().unwrap())
-            .is_none());
+        gl_context.make_not_current().unwrap();
     }
 
     fn window_event(
@@ -175,23 +169,21 @@ impl ApplicationHandler<()> for Application {
         event: WindowEvent,
     ) {
         match event {
-            WindowEvent::Resized(size) => {
-                if size.width != 0 && size.height != 0 {
-                    // Some platforms like EGL require resizing GL surface to update the size
-                    // Notable platforms here are Wayland and macOS, other don't require it
-                    // and the function is no-op, but it's wise to resize it for portability
-                    // reasons.
-                    if let Some((gl_context, gl_surface)) =
-                        &self.gl_context.as_ref().zip(self.gl_surface.as_ref())
-                    {
-                        gl_surface.resize(
-                            gl_context,
-                            NonZeroU32::new(size.width).unwrap(),
-                            NonZeroU32::new(size.height).unwrap(),
-                        );
-                        let renderer = self.renderer.as_ref().unwrap();
-                        renderer.resize(size.width as i32, size.height as i32);
-                    }
+            WindowEvent::Resized(size) if size.width != 0 && size.height != 0 => {
+                // Some platforms like EGL require resizing GL surface to update the size
+                // Notable platforms here are Wayland and macOS, other don't require it
+                // and the function is no-op, but it's wise to resize it for portability
+                // reasons.
+                if let Some((gl_context, gl_surface)) =
+                    &self.gl_context.as_ref().zip(self.gl_surface.as_ref())
+                {
+                    gl_surface.resize(
+                        gl_context,
+                        NonZeroU32::new(size.width).unwrap(),
+                        NonZeroU32::new(size.height).unwrap(),
+                    );
+                    let renderer = self.renderer.as_ref().unwrap();
+                    renderer.resize(size.width as i32, size.height as i32);
                 }
             },
             WindowEvent::CloseRequested
