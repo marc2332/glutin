@@ -27,7 +27,6 @@ use raw_window_handle::HasRawWindowHandle;
 
 use raw_window_handle::RawWindowHandle;
 use winit::error::OsError;
-use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes};
 
 #[cfg(glx_backend)]
@@ -189,7 +188,7 @@ fn create_display(
 /// [`Window`]: winit::window::Window
 /// [`Config`]: glutin::config::Config
 pub fn finalize_window(
-    event_loop: &ActiveEventLoop,
+    event_loop: &impl GlutinEventLoop,
     mut attributes: WindowAttributes,
     gl_config: &Config,
 ) -> Result<Window, OsError> {
