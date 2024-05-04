@@ -13,7 +13,6 @@ pub trait GlutinEventLoop: Sealed {
     fn display_handle(&self) -> RawDisplayHandle;
 }
 
-
 impl Sealed for ActiveEventLoop {}
 
 impl GlutinEventLoop for ActiveEventLoop {
