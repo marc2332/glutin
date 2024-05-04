@@ -2,7 +2,6 @@
 
 # Version 0.5.0
 
-- Bump MSRV from `1.65` to `1.70`.
 - **Breaking:** Update _winit_ to `0.30`. See [winit's CHANGELOG](https://github.com/rust-windowing/winit/releases/tag/v0.30.0) for more info.
 
 # Version 0.4.2
