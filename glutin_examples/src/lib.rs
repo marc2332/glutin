@@ -37,12 +37,14 @@ pub fn main(event_loop: winit::event_loop::EventLoop<()>) -> Result<(), Box<dyn 
 
 #[derive(Default)]
 struct Application {
+    // Renderer must be dropped the first as it uses the GL states from below.
+    renderer: Option<Renderer>,
     not_current_gl_context: Option<NotCurrentContext>,
     gl_context: Option<PossiblyCurrentContext>,
     gl_surface: Option<Surface<WindowSurface>>,
-    window: Option<Window>,
     gl_config: Option<Config>,
-    renderer: Option<Renderer>,
+    // Window must be dropped at the end.
+    window: Option<Window>,
 }
 
 impl Application {
