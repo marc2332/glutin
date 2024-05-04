@@ -5,10 +5,11 @@ use std::ops::Deref;
 
 use gl::types::GLfloat;
 use raw_window_handle::HasRawWindowHandle;
+use winit::application::ApplicationHandler;
 use winit::event::{KeyEvent, WindowEvent};
+use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{Key, NamedKey};
 use winit::window::Window;
-use winit::{application::ApplicationHandler, event_loop::ActiveEventLoop};
 
 use glutin::config::{Config, ConfigTemplateBuilder};
 use glutin::context::{

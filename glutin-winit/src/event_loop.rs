@@ -1,9 +1,7 @@
 use raw_window_handle::{HasRawDisplayHandle, RawDisplayHandle};
-use winit::{
-    error::OsError,
-    event_loop::{ActiveEventLoop, EventLoop},
-    window::{Window, WindowAttributes},
-};
+use winit::error::OsError;
+use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::window::{Window, WindowAttributes};
 
 use crate::private::Sealed;
 
