@@ -115,14 +115,7 @@ impl ApplicationHandler<PlatformThreadEvent> for Application {
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {
-                if size.width != 0 && size.height != 0 {
-                    self.send_event_to_current_render_thread(RenderThreadEvent::Resize(
-                        PhysicalSize {
-                            width: NonZeroU32::new(size.width).unwrap(),
-                            height: NonZeroU32::new(size.height).unwrap(),
-                        },
-                    ));
-                }
+                self.send_event_to_current_render_thread(RenderThreadEvent::Resize(size));
             },
             WindowEvent::RedrawRequested => {
                 self.send_event_to_current_render_thread(RenderThreadEvent::Draw);
@@ -283,7 +276,7 @@ enum RenderThreadEvent {
     Draw,
     MakeCurrent,
     MakeNotCurrent,
-    Resize(PhysicalSize<NonZeroU32>),
+    Resize(PhysicalSize<u32>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -334,7 +327,12 @@ impl RenderThread {
                             .expect("sending context-not-current event failed");
                     },
                     RenderThreadEvent::Resize(size) => {
-                        render_context_guard.resize(size);
+                        if size.width != 0 && size.height != 0 {
+                            render_context_guard.resize(PhysicalSize {
+                                width: NonZeroU32::new(size.width).unwrap(),
+                                height: NonZeroU32::new(size.height).unwrap(),
+                            });
+                        }
                     },
                 }
             }
