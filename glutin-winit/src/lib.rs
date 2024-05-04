@@ -9,7 +9,9 @@
 #![cfg_attr(clippy, deny(warnings))]
 
 mod window;
+mod event_loop;
 
+use event_loop::GlutinEventLoop;
 pub use window::GlWindow;
 
 use std::error::Error;
@@ -23,7 +25,7 @@ use glutin::prelude::*;
 #[cfg(wgl_backend)]
 use raw_window_handle::HasRawWindowHandle;
 
-use raw_window_handle::{HasRawDisplayHandle, RawWindowHandle};
+use raw_window_handle::RawWindowHandle;
 use winit::error::OsError;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes};
@@ -35,6 +37,13 @@ use winit::platform::x11::WindowAttributesExtX11;
 
 #[cfg(all(not(egl_backend), not(glx_backend), not(wgl_backend), not(cgl_backend)))]
 compile_error!("Please select at least one api backend");
+
+pub(crate) mod private {
+    /// Prevent traits from being implemented downstream, since those are used
+    /// purely for documentation organization and simplify platform api
+    /// implementation maintenance.
+    pub trait Sealed {}
+}
 
 /// The helper to perform [`Display`] creation and OpenGL platform
 /// bootstrapping with the help of [`winit`] with little to no platform specific
@@ -88,7 +97,7 @@ impl DisplayBuilder {
     /// otherwise only builtin functions like `glClear` will be available.
     pub fn build<Picker>(
         mut self,
-        active_event_loop: &ActiveEventLoop,
+        event_loop: &impl GlutinEventLoop,
         template_builder: ConfigTemplateBuilder,
         config_picker: Picker,
     ) -> Result<(Option<Window>, Config), Box<dyn Error>>
@@ -98,7 +107,7 @@ impl DisplayBuilder {
         // XXX with WGL backend window should be created first.
         #[cfg(wgl_backend)]
         let window = if let Some(wa) = self.window_attributes.take() {
-            Some(active_event_loop.create_window(wa)?)
+            Some(event_loop.create_window(wa)?)
         } else {
             None
         };
@@ -108,7 +117,7 @@ impl DisplayBuilder {
         #[cfg(not(wgl_backend))]
         let raw_window_handle = None;
 
-        let gl_display = create_display(active_event_loop, self.preference, raw_window_handle)?;
+        let gl_display = create_display(event_loop, self.preference, raw_window_handle)?;
 
         // XXX the native window must be passed to config picker when WGL is used
         // otherwise very limited OpenGL features will be supported.
@@ -128,7 +137,7 @@ impl DisplayBuilder {
 
         #[cfg(not(wgl_backend))]
         let window = if let Some(wb) = self.window_attributes.take() {
-            Some(finalize_window(active_event_loop, wb, &gl_config)?)
+            Some(finalize_window(event_loop, wb, &gl_config)?)
         } else {
             None
         };
@@ -138,7 +147,7 @@ impl DisplayBuilder {
 }
 
 fn create_display(
-    active_event_loop: &ActiveEventLoop,
+    event_loop: &impl GlutinEventLoop,
     _api_preference: ApiPreference,
     _raw_window_handle: Option<RawWindowHandle>,
 ) -> Result<Display, Box<dyn Error>> {
@@ -170,7 +179,7 @@ fn create_display(
         ApiPreference::FallbackEgl => DisplayApiPreference::WglThenEgl(_raw_window_handle),
     };
 
-    unsafe { Ok(Display::new(active_event_loop.raw_display_handle(), _preference)?) }
+    unsafe { Ok(Display::new(event_loop.display_handle(), _preference)?) }
 }
 
 /// Finalize [`Window`] creation by applying the options from the [`Config`], be
@@ -180,7 +189,7 @@ fn create_display(
 /// [`Window`]: winit::window::Window
 /// [`Config`]: glutin::config::Config
 pub fn finalize_window(
-    active_event_loop: &ActiveEventLoop,
+    event_loop: &ActiveEventLoop,
     mut attributes: WindowAttributes,
     gl_config: &Config,
 ) -> Result<Window, OsError> {
@@ -196,7 +205,7 @@ pub fn finalize_window(
         attributes
     };
 
-    active_event_loop.create_window(attributes)
+    event_loop.create_window(attributes)
 }
 
 /// Simplified version of the [`DisplayApiPreference`] which is used to simplify
