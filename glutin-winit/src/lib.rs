@@ -23,7 +23,7 @@ use glutin::platform::x11::X11GlConfigExt;
 use glutin::prelude::*;
 
 #[cfg(wgl_backend)]
-use raw_window_handle::HasRawWindowHandle;
+use raw_window_handle::HasWindowHandle;
 
 use raw_window_handle::RawWindowHandle;
 use winit::error::OsError;
@@ -112,7 +112,10 @@ impl DisplayBuilder {
         };
 
         #[cfg(wgl_backend)]
-        let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
+        let raw_window_handle = window
+            .as_ref()
+            .and_then(|window| window.window_handle().ok())
+            .map(|handle| handle.as_raw());
         #[cfg(not(wgl_backend))]
         let raw_window_handle = None;
 
@@ -178,7 +181,8 @@ fn create_display(
         ApiPreference::FallbackEgl => DisplayApiPreference::WglThenEgl(_raw_window_handle),
     };
 
-    unsafe { Ok(Display::new(event_loop.display_handle(), _preference)?) }
+    let handle = event_loop.glutin_display_handle()?.as_raw();
+    unsafe { Ok(Display::new(handle, _preference)?) }
 }
 
 /// Finalize [`Window`] creation by applying the options from the [`Config`], be
