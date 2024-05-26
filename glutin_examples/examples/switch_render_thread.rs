@@ -14,11 +14,11 @@ use glutin_examples::gl::types::GLfloat;
 use glutin_examples::{gl_config_picker, Renderer};
 use glutin_winit::{self, DisplayBuilder, GlWindow};
 use raw_window_handle::HasWindowHandle;
-use winit::{application::ApplicationHandler, event_loop::ActiveEventLoop, window::WindowId};
+use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::event_loop::{EventLoop, EventLoopProxy};
-use winit::window::Window;
+use winit::event_loop::{ActiveEventLoop, EventLoop, EventLoopProxy};
+use winit::window::{Window, WindowId};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let event_loop = EventLoop::<PlatformThreadEvent>::with_user_event().build().unwrap();
@@ -96,11 +96,7 @@ impl ApplicationHandler<PlatformThreadEvent> for Application {
         }
     }
 
-    fn user_event(
-        &mut self,
-        _event_loop: &ActiveEventLoop,
-        event: PlatformThreadEvent,
-    ) {
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: PlatformThreadEvent) {
         if PlatformThreadEvent::ContextNotCurrent == event {
             self.complete_render_thread_switch();
         }

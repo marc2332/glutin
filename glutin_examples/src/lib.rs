@@ -5,11 +5,11 @@ use std::ops::Deref;
 
 use gl::types::GLfloat;
 use raw_window_handle::HasWindowHandle;
-use winit::{application::ApplicationHandler, event_loop::EventLoop, window::WindowId};
+use winit::application::ApplicationHandler;
 use winit::event::{KeyEvent, WindowEvent};
-use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::{Key, NamedKey};
-use winit::window::Window;
+use winit::window::{Window, WindowId};
 
 use glutin::config::{Config, ConfigTemplateBuilder};
 use glutin::context::{ContextApi, ContextAttributesBuilder, PossiblyCurrentContext, Version};
@@ -123,7 +123,7 @@ impl ApplicationHandler<()> for Application {
     fn resumed(&mut self, active_event_loop: &ActiveEventLoop) {
         #[cfg(android_platform)]
         println!("Android window available");
-        
+
         let (gl_config, window) =
             if let Some(state) = self.gl_config.as_ref().zip(self.window.as_ref()) {
                 state

@@ -5,7 +5,7 @@ use winit::window::{Window, WindowAttributes};
 
 use crate::private::Sealed;
 
-/// [`ActiveEventLoop`] is the recommended way to interact with the event 
+/// [`ActiveEventLoop`] is the recommended way to interact with the event
 /// loop, but for compatibility purposes [`EventLoop`] is also supported
 /// although not recommended anymore as it has been deprecated by Winit.
 pub trait GlutinEventLoop: Sealed {
