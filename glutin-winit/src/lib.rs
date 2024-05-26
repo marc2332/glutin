@@ -83,7 +83,7 @@ impl DisplayBuilder {
 
     /// Initialize the OpenGL platform and create a compatible window to use
     /// with it when the [`WindowAttributes`] was passed with
-    /// [`Self::with_window_attributes`]. It's optional, since on some
+    /// [`Self::with_window_attributes()`]. It's optional, since on some
     /// platforms like `Android` it is not available early on, so you want to
     /// find configuration and later use it with the [`finalize_window`].
     /// But if you don't care about such platform you can always pass
@@ -92,7 +92,7 @@ impl DisplayBuilder {
     /// # Api-specific
     ///
     /// **WGL:** - [`WindowAttributes`] **must** be passed in
-    /// [`Self::with_window_attributes`] if modern OpenGL(ES) is desired,
+    /// [`Self::with_window_attributes()`] if modern OpenGL(ES) is desired,
     /// otherwise only builtin functions like `glClear` will be available.
     pub fn build<Picker>(
         mut self,
