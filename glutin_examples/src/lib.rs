@@ -121,6 +121,9 @@ impl Application {
 
 impl ApplicationHandler<()> for Application {
     fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
+        #[cfg(android_platform)]
+        println!("Android window available");
+        
         let (gl_config, window) =
             if let Some(state) = self.gl_config.as_ref().zip(self.window.as_ref()) {
                 state
