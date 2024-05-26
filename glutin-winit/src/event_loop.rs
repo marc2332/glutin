@@ -5,8 +5,9 @@ use winit::window::{Window, WindowAttributes};
 
 use crate::private::Sealed;
 
-/// Even though [ActiveEventLoop] is the recommended way for using the event
-/// loop we still want to have support for [EventLoop], for now.
+/// [`ActiveEventLoop`] is the recommended way to interact with the event 
+/// loop, but for compatibility purposes [`EventLoop`] is also supported
+/// although not recommended anymore as it has been deprecated by Winit.
 pub trait GlutinEventLoop: Sealed {
     fn create_window(&self, window_attributes: WindowAttributes) -> Result<Window, OsError>;
 
