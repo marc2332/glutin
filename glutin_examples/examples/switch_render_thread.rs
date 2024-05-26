@@ -14,7 +14,7 @@ use glutin_examples::gl::types::GLfloat;
 use glutin_examples::{gl_config_picker, Renderer};
 use glutin_winit::{self, DisplayBuilder, GlWindow};
 use raw_window_handle::HasWindowHandle;
-use winit::application::ApplicationHandler;
+use winit::{application::ApplicationHandler, event_loop::ActiveEventLoop, window::WindowId};
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
 use winit::event_loop::{EventLoop, EventLoopProxy};
@@ -80,7 +80,7 @@ impl Application {
 }
 
 impl ApplicationHandler<PlatformThreadEvent> for Application {
-    fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn resumed(&mut self, active_event_loop: &ActiveEventLoop) {
         if self.render_thread_senders.is_none() {
             let (window, render_context) = create_window_with_render_context(active_event_loop)
                 .expect("Failed to create window.");
@@ -98,7 +98,7 @@ impl ApplicationHandler<PlatformThreadEvent> for Application {
 
     fn user_event(
         &mut self,
-        _event_loop: &winit::event_loop::ActiveEventLoop,
+        _event_loop: &ActiveEventLoop,
         event: PlatformThreadEvent,
     ) {
         if PlatformThreadEvent::ContextNotCurrent == event {
@@ -108,8 +108,8 @@ impl ApplicationHandler<PlatformThreadEvent> for Application {
 
     fn window_event(
         &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        _window_id: winit::window::WindowId,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
         event: WindowEvent,
     ) {
         match event {
@@ -189,7 +189,7 @@ impl RenderContext {
 }
 
 fn create_window_with_render_context(
-    active_event_loop: &winit::event_loop::ActiveEventLoop,
+    active_event_loop: &ActiveEventLoop,
 ) -> Result<(Window, RenderContext), Box<dyn Error>> {
     let window_attributes = Window::default_attributes().with_transparent(true);
 

@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use gl::types::GLfloat;
 use raw_window_handle::HasWindowHandle;
-use winit::application::ApplicationHandler;
+use winit::{application::ApplicationHandler, event_loop::EventLoop, window::WindowId};
 use winit::event::{KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{Key, NamedKey};
@@ -26,7 +26,7 @@ pub mod gl {
     pub use Gles2 as Gl;
 }
 
-pub fn main(event_loop: winit::event_loop::EventLoop<()>) -> Result<(), Box<dyn Error>> {
+pub fn main(event_loop: EventLoop<()>) -> Result<(), Box<dyn Error>> {
     let mut app = Application::default();
 
     event_loop.run_app(&mut app)?;
@@ -120,7 +120,7 @@ impl Application {
 }
 
 impl ApplicationHandler<()> for Application {
-    fn resumed(&mut self, active_event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn resumed(&mut self, active_event_loop: &ActiveEventLoop) {
         #[cfg(android_platform)]
         println!("Android window available");
         
@@ -157,7 +157,7 @@ impl ApplicationHandler<()> for Application {
         self.gl_surface = Some(gl_surface);
     }
 
-    fn suspended(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
         // This event is only raised on Android, where the backing NativeWindow for a GL
         // Surface can appear and disappear at any moment.
         println!("Android window removed");
@@ -170,8 +170,8 @@ impl ApplicationHandler<()> for Application {
 
     fn window_event(
         &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        _window_id: winit::window::WindowId,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
         event: WindowEvent,
     ) {
         match event {
