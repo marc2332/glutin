@@ -11,12 +11,14 @@ use crate::private::Sealed;
 pub trait GlutinEventLoop: Sealed {
     /// Create the window.
     ///
-    /// Possible causes of error include denied permission, incompatible system, and lack of memory.
+    /// Possible causes of error include denied permission, incompatible system,
+    /// and lack of memory.
     ///
     /// ## Platform-specific
     ///
-    /// - **Web:** The window is created but not inserted into the web page automatically. Please
-    ///   see the web platform module for more information.
+    /// - **Web:** The window is created but not inserted into the web page
+    ///   automatically. Please see the web platform module for more
+    ///   information.
     fn create_window(&self, window_attributes: WindowAttributes) -> Result<Window, OsError>;
 
     /// Get a handle to the display controller of the windowing system.
