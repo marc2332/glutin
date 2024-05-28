@@ -49,14 +49,9 @@ impl Application {
     fn create_window(&mut self, active_event_loop: &ActiveEventLoop) {
         // Only Windows requires the window to be present before creating the display.
         // Other platforms don't really need one.
-        //
-        // XXX if you don't care about running on Android or so you can safely remove
-        // this condition and always pass the window builder.
-        let window_attributes = cfg!(wgl_backend).then(|| {
-            Window::default_attributes()
-                .with_transparent(true)
-                .with_title("Glutin triangle gradient example (press Escape to exit)")
-        });
+        let window_attributes = Window::default_attributes()
+            .with_transparent(true)
+            .with_title("Glutin triangle gradient example (press Escape to exit)");
 
         // The template will match only the configurations supporting rendering
         // to windows.
@@ -69,7 +64,7 @@ impl Application {
         let template =
             ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(cfg!(cgl_backend));
 
-        let display_builder = DisplayBuilder::new().with_window_attributes(window_attributes);
+        let display_builder = DisplayBuilder::new().with_window_attributes(Some(window_attributes));
 
         let (window, gl_config) = display_builder
             .build(active_event_loop, template, gl_config_picker)

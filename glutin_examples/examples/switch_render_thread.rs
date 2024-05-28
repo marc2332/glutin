@@ -81,19 +81,20 @@ impl Application {
 
 impl ApplicationHandler<PlatformThreadEvent> for Application {
     fn resumed(&mut self, active_event_loop: &ActiveEventLoop) {
-        if self.render_thread_senders.is_none() {
-            let (window, render_context) = create_window_with_render_context(active_event_loop)
-                .expect("Failed to create window.");
-            let render_context = Arc::new(Mutex::new(render_context));
-
-            let (_render_threads, render_thread_senders) =
-                spawn_render_threads(render_context, &self.event_loop_proxy);
-
-            self.window = Some(window);
-            self.render_thread_senders = Some(render_thread_senders);
-
-            self.send_event_to_current_render_thread(RenderThreadEvent::MakeCurrent);
+        if self.render_thread_senders.is_some() {
+            return;
         }
+
+        let (window, render_context) =
+            create_window_with_render_context(active_event_loop).expect("Failed to create window.");
+        let render_context = Arc::new(Mutex::new(render_context));
+
+        let (_render_threads, render_thread_senders) =
+            spawn_render_threads(render_context, &self.event_loop_proxy);
+
+        self.window = Some(window);
+        self.render_thread_senders = Some(render_thread_senders);
+        self.send_event_to_current_render_thread(RenderThreadEvent::MakeCurrent);
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: PlatformThreadEvent) {
